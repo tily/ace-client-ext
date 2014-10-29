@@ -1,0 +1,7 @@
+module Ace
+  module Client
+    module Ext
+      VERSION = "0.0.1"
+    end
+  end
+end
