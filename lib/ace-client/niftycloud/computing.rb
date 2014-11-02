@@ -128,6 +128,14 @@ module AceClient
           self.action('DeleteVolume', 'VolumeId' => volume['volumeId'])
         end
       end
+
+      def delete_images
+        self.images.each do |image|
+          if image['imageOwnerId'] == 'self'
+            self.action('DeleteImage', 'ImageId' => image['imageId'])
+          end
+        end
+      end
     
       def delete_resources
         stop_instances
@@ -137,6 +145,7 @@ module AceClient
         delete_security_groups
         delete_load_balancers
         delete_volumes
+        delete_images
       end
     end
   end
