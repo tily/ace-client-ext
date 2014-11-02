@@ -141,7 +141,13 @@ module AceClient
           end
         end
       end
-    
+
+      def delete_ssl_certificates
+        self.ssl_certificates.each do |sc|
+          self.action('DeleteSslCertificate', 'FqdnId' => sc['fqdnId'])
+        end
+      end
+
       def delete_resources
         stop_instances
         delete_instances 
@@ -151,6 +157,7 @@ module AceClient
         delete_load_balancers
         delete_volumes
         delete_images
+        delete_ssl_certificates
       end
     end
   end
