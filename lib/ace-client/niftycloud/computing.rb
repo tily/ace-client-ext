@@ -24,7 +24,7 @@ module AceClient
         :key_pairs => {:action => 'DescribeKeyPairs', :key => 'keySet'},
         :images => {:action => 'DescribeImages', :key => 'imagesSet'},
         :security_groups => {:action => 'DescribeSecurityGroups', :key => 'securityGroupInfo'},
-        :ssl_certificates => {:action => 'DescribeSSLCertificates', :key => 'certsSet'},
+        :ssl_certificates => {:action => 'DescribeSslCertificates', :key => 'certsSet'},
         :addresses => {:action => 'DescribeAddresses', :key => 'addressesSet'},
         :uploads => {:action => 'DescribeUploads', :key => 'uploads'},
       }.each do |method, options|
