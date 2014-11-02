@@ -35,7 +35,7 @@ module AceClient
 
       def load_balancers
         response = self.action('DescribeLoadBalancers', {})
-        [response['DescribeLoadBalancersResult']['LoadBalancerDescriptions']['member']].flatten rescue []
+        [response['DescribeLoadBalancersResponse']['DescribeLoadBalancersResult']['LoadBalancerDescriptions']['member']].flatten rescue []
       end
 
       def security_group_rules
@@ -120,7 +120,12 @@ module AceClient
       end 
 
       def delete_load_balancers
-        # not implemented yet
+        self.load_balancers.each do |lb|
+          name = lb['LoadBalancerName']
+          port = lb['ListenerDescriptions']['member']['Listener']['LoadBalancerPort']
+          instance_port = lb['ListenerDescriptions']['member']['Listener']['InstancePort']
+          self.action('DeleteLoadBalancer', 'LoadBalancerName' => name, 'LoadBalancerPort' => port, 'InstancePort' => instance_port)
+        end
       end
 
       def delete_volumes
