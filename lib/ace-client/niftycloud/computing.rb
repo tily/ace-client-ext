@@ -124,7 +124,9 @@ module AceClient
       end
 
       def delete_volumes
-        # not implemented yet
+        self.volumes.each do |volume|
+          self.action('DeleteVolume', 'VolumeId' => volume['volumeId'])
+        end
       end
     
       def delete_resources
