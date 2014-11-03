@@ -2,6 +2,17 @@
 module AceClient
   module Niftycloud
     module Computing
+      def build_client(options={})
+        options = options.merge(
+          :before_signature => lambda {|params|
+            params['AccessKeyId'] = params.delete('AWSAccessKeyId')
+          }
+        )
+        client = AceClient::Query2.new(options)
+        client.extend(AceClient::Niftycloud::Computing)
+        client
+      end
+
       def instances
         response = self.action('DescribeInstances', {})
         begin
@@ -159,6 +170,8 @@ module AceClient
         delete_images
         delete_ssl_certificates
       end
+
+      module_function :build_client
     end
   end
 end
