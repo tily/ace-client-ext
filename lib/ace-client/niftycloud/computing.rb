@@ -58,7 +58,7 @@ module AceClient
       end
 
       def stop_instances
-        until instances.all? {|instance| instance['instanceState']['name'] != 'running'} do
+        until instances.all? {|instance| instance['instanceState']['name'] != 'running'} || instances.empty? do
           instances.each do |instance|
             if instance['instanceState']['name'] != 'stopped'
               self.action('StopInstances', {'InstanceId.1' => instance['instanceId']})
