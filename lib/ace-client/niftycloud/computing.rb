@@ -71,6 +71,10 @@ module AceClient
       def delete_instances
         until instances.empty? do
           instances.each do |instance|
+            response = self.action('DescribeInstanceAttribute', {'InstanceId' => instance['instanceId'], 'Attribute' => 'disableApiTermination'})
+            if response['DescribeInstanceAttributeResponse']['disableApiTermination']['value'] == 'true'
+              self.action('ModifyInstanceAttribute', {'InstanceId' => instance['instanceId'], 'Attribute' => 'disableApiTermination', 'Value' => 'false'})
+            end
             self.action('TerminateInstances', {'InstanceId.1' => instance['instanceId']})
           end
           uploads.each do |upload|
