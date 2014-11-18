@@ -22,11 +22,17 @@ module AceClient
       end
 
       def delete_db_instances
-        until db_instances.empty?
-          db_instances.each do |db_instance|
-            self.action('DeleteDBInstance', 'DBInstanceIdentifier' => db_instance['DBInstanceIdentifier'], 'SkipFinalSnapshot' => 'true')
+        db_instances.each do |db_instance|
+          self.action('DeleteDBInstance', 'DBInstanceIdentifier' => db_instance['DBInstanceIdentifier'], 'SkipFinalSnapshot' => 'true')
+        end
+        timeout(60*60) do
+          until db_instances.empty?
+            if db_instances.any? {|db_instance| db_instance['DBInstanceStatus'] == 'failed' }
+              failed = db_instances.select {|db_instance| db_instance['DBInstanceStatus'] == 'failed' }
+              raise "DBInstance #{failed.map {|f| f['DBInstanceIdentifier'] }.join(',')} is failed"
+            end
+            sleep 5
           end
-          sleep 5
         end
       end
 
