@@ -2,6 +2,11 @@
 module AceClient
   module Niftycloud
     module Computing
+      DEFAULT_STOP_INSTANCES_TIMEOUT = 60*30
+      DEFAULT_STOP_INSTANCES_SLEEP = 5
+      DEFAULT_DELETE_INSTANCES_TIMEOUT = 60*30
+      DEFAULT_DELETE_INSTANCES_SLEEP = 5
+
       def build_client(options={})
         options = options.merge(
           :before_signature => lambda {|params|
@@ -57,30 +62,40 @@ module AceClient
         response['DescribeInstancesResponse']['reservationSet']['item']['instancesSet']['item'] rescue nil
       end
 
-      def stop_instances
-        until instances.all? {|instance| instance['instanceState']['name'] != 'running'} || instances.empty? do
-          instances.each do |instance|
-            if instance['instanceState']['name'] != 'stopped'
-              self.action('StopInstances', {'InstanceId.1' => instance['instanceId']})
+      def stop_instances(options={})
+        options[:timeout] ||= DEFAULT_STOP_INSTANCES_TIMEOUT
+        options[:sleep] ||= DEFAULT_STOP_INSTANCES_SLEEP
+
+        timeout(options[:timeout]) do
+          until instances.all? {|instance| instance['instanceState']['name'] != 'running'} || instances.empty? do
+            instances.each do |instance|
+              if instance['instanceState']['name'] != 'stopped'
+                self.action('StopInstances', {'InstanceId.1' => instance['instanceId']})
+              end
             end
+            sleep options[:sleep]
           end
-          sleep 5
         end
       end
 
-      def delete_instances
-        until instances.empty? do
-          instances.each do |instance|
-            response = self.action('DescribeInstanceAttribute', {'InstanceId' => instance['instanceId'], 'Attribute' => 'disableApiTermination'})
-            if response['DescribeInstanceAttributeResponse']['disableApiTermination']['value'] == 'true'
-              self.action('ModifyInstanceAttribute', {'InstanceId' => instance['instanceId'], 'Attribute' => 'disableApiTermination', 'Value' => 'false'})
+      def delete_instances(options={})
+        options[:timeout] ||= DEFAULT_DELETE_INSTANCES_TIMEOUT
+        options[:sleep] ||= DEFAULT_DELETE_INSTANCES_SLEEP
+
+        timeout(options[:timeout]) do
+          until instances.empty? do
+            instances.each do |instance|
+              response = self.action('DescribeInstanceAttribute', {'InstanceId' => instance['instanceId'], 'Attribute' => 'disableApiTermination'})
+              if response['DescribeInstanceAttributeResponse']['disableApiTermination']['value'] == 'true'
+                self.action('ModifyInstanceAttribute', {'InstanceId' => instance['instanceId'], 'Attribute' => 'disableApiTermination', 'Value' => 'false'})
+              end
+              self.action('TerminateInstances', {'InstanceId.1' => instance['instanceId']})
             end
-            self.action('TerminateInstances', {'InstanceId.1' => instance['instanceId']})
+            uploads.each do |upload|
+              self.action('CancelUpload', {'ConversionTaskId' => upload['conversionTaskId']})
+            end
+            sleep options[:sleep]
           end
-          uploads.each do |upload|
-            self.action('CancelUpload', {'ConversionTaskId' => upload['conversionTaskId']})
-          end
-          sleep 5
         end
       end
 
@@ -163,9 +178,15 @@ module AceClient
         end
       end
 
-      def delete_resources
-        stop_instances
-        delete_instances 
+      def delete_resources(options={})
+        stop_instances(
+          timeout: options[:stop_instances_timeout],
+          sleep: options[:stop_instances_sleep]
+        )
+        delete_instances(
+          timeout: options[:delete_instances_timeout],
+          sleep: options[:delete_instances_sleep]
+        )
         delete_key_pairs
         delete_security_group_rules
         delete_security_groups
