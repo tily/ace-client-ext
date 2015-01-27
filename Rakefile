@@ -6,6 +6,7 @@ task :vup do
         File.write('VERSION', "#{version}\n")
         system "git add VERSION"
         system "git commit -m 'version up to #{version}'"
+        system "git tag v#{version} -m v#{version}"
         system "git push origin master"
         system "git push --tags"
         system "rake build"
