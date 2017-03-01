@@ -1,0 +1,7 @@
+version: "2"
+services:
+  lib:
+    build: .
+    volumes:
+      - ./:/work
+    command: tail -f /dev/null
